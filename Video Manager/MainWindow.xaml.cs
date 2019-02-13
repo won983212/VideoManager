@@ -24,5 +24,15 @@ namespace Video_Manager
 		{
 			InitializeComponent();
 		}
+
+		private void Titlebar_MouseDown(object sender, MouseButtonEventArgs e)
+		{
+			DragMove();
+		}
+
+		private void Exit_Click(object sender, RoutedEventArgs e)
+		{
+			Application.Current.Shutdown();
+		}
 	}
 }

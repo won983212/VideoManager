@@ -4,6 +4,60 @@
              xmlns:local="clr-namespace:Video_Manager"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+        <!-- Colors -->
+        <SolidColorBrush x:Key="BlueBrush" Color="#FF2A579A"/>
+        <SolidColorBrush x:Key="LightGrayBrush" Color="#FFF1F1F1"/>
+        <SolidColorBrush x:Key="TagBrush" Color="SteelBlue"/>
+        <SolidColorBrush x:Key="GrayBrush" Color="#FFD6D6D6"/>
+
+        <!-- Shadow Effect -->
+        <DropShadowEffect x:Key="ShadowEffect" Color="#FFD6D6D6" BlurRadius="3" RenderingBias="Quality" ShadowDepth="4"/>
+
+        <!-- Component styles -->
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource BlueBrush}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" BorderThickness="0">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#FF3368B6"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#FF214478"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="false">
+                    <Setter Property="Background" Value="#FFA8A8A8"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="TagText" TargetType="Button">
+            <Setter Property="Foreground" Value="SteelBlue"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="Transparent" BorderThickness="0">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="#FF59A6E6"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Foreground" Value="#FF386991"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </Application.Resources>
 </Application>
