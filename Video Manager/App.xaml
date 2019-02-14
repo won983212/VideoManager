@@ -39,7 +39,7 @@
             </Style.Triggers>
         </Style>
 
-        <Style x:Key="TagText" TargetType="Button">
+        <Style x:Key="TagButton" TargetType="Button">
             <Setter Property="Foreground" Value="SteelBlue"/>
             <Setter Property="Template">
                 <Setter.Value>

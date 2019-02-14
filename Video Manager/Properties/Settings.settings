@@ -1,7 +1,18 @@
 ﻿<?xml version='1.0' encoding='utf-8'?>
-<SettingsFile xmlns="uri:settings" CurrentProfile="(Default)">
-  <Profiles>
-    <Profile Name="(Default)" />
-  </Profiles>
-  <Settings />
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="Video_Manager.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="WorkingFolder" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="InitialWidth" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">950</Value>
+    </Setting>
+    <Setting Name="InitialHeight" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">550</Value>
+    </Setting>
+    <Setting Name="ArrangeMode" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">0</Value>
+    </Setting>
+  </Settings>
 </SettingsFile>
