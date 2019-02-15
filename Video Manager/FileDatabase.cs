@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -10,7 +11,7 @@ namespace Video_Manager
     public class FileDatabase
     {
 		private const char BlockBeginner = (char)31;
-		private HashSet<string> allTags = new HashSet<string>();
+		private Dictionary<string, int> allTagCounts = new Dictionary<string, int>();
 		private Dictionary<string, VideoMetadata> database = new Dictionary<string, VideoMetadata>();
 		private string dbPath = "";
 
@@ -19,14 +20,15 @@ namespace Video_Manager
 			if (database.ContainsKey(filename))
 				return database[filename];
 
-			VideoMetadata meta = new VideoMetadata(allTags);
+			VideoMetadata meta = new VideoMetadata(allTagCounts);
+			meta.CopyedCount = 0;
 			database.Add(filename, meta);
 			return meta;
 		}
 
 		public IEnumerable<string> GetAllTags()
 		{
-			return allTags;
+			return allTagCounts.Keys;
 		}
 
 		public void SetWorkingFolder(string working_folder)
@@ -47,10 +49,10 @@ namespace Video_Manager
 				{
 					if (line[0] == BlockBeginner)
 					{
-						file = line;
 						if (file != null && meta != null)
 							database.Add(file, meta);
-						meta = new VideoMetadata(allTags);
+						file = line.Substring(1);
+						meta = new VideoMetadata(allTagCounts);
 					}
 					else if(meta != null)
 					{
@@ -85,10 +87,10 @@ namespace Video_Manager
 
 	public class VideoMetadata
 	{
-		private HashSet<string> allTagsRef;
-		private List<string> tagList = new List<string>();
+		private Dictionary<string, int> allTagsRef;
+		private ObservableCollection<string> tagList = new ObservableCollection<string>();
 
-		public VideoMetadata(HashSet<string> allTagsRef)
+		public VideoMetadata(Dictionary<string, int> allTagsRef)
 		{
 			this.allTagsRef = allTagsRef;
 		}
@@ -104,8 +106,25 @@ namespace Video_Manager
 
 		public void AddTag(string tag)
 		{
-			tagList.Add(tag);
-			allTagsRef.Add(tag);
+			if (!tagList.Contains(tag))
+			{
+				tagList.Add(tag);
+				if (allTagsRef.ContainsKey(tag))
+					allTagsRef[tag]++;
+				else
+					allTagsRef.Add(tag, 1);
+			}
+		}
+
+		public void RemoveTag(string tag)
+		{
+			if (tagList.Remove(tag))
+			{
+				if (allTagsRef[tag] > 1)
+					allTagsRef[tag]--;
+				else
+					allTagsRef.Remove(tag);
+			}
 		}
 	}
 }

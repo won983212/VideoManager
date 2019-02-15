@@ -39,7 +39,43 @@
             </Style.Triggers>
         </Style>
 
+        <Style TargetType="ProgressBar">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ProgressBar">
+                        <Border Background="White">
+                            <Grid x:Name="PART_Track">
+                                <Rectangle x:Name="PART_Indicator" HorizontalAlignment="Left" Fill="{StaticResource BlueBrush}"/>
+                            </Grid>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style x:Key="TagButton" TargetType="Button">
+            <Setter Property="Foreground" Value="SteelBlue"/>
+            <Setter Property="Background" Value="#FFDEEFF9"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="SteelBlue" BorderThickness="1" CornerRadius="2">
+                            <ContentPresenter Margin="5,3" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#FFE8F7FF"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#FFAEDFFB"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="BlueTextButton" TargetType="Button">
             <Setter Property="Foreground" Value="SteelBlue"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -59,5 +95,6 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+
     </Application.Resources>
 </Application>

@@ -1,0 +1,33 @@
+﻿<Window x:Class="Video_Manager.FileEditWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Video_Manager"
+        mc:Ignorable="d"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        MouseDown="Window_MouseDown"
+        Effect="{StaticResource ShadowEffect}"
+        Title="FileEditWindow" SizeToContent="Height" Width="320">
+    <Border BorderBrush="DarkGray" BorderThickness="1">
+        <StackPanel>
+            <Border Background="{StaticResource LightGrayBrush}" BorderThickness="0,0,0,1" BorderBrush="{StaticResource GrayBrush}">
+                <TextBlock x:Name="tblMethod" Margin="5" FontSize="22" FontWeight="Light" FontFamily="Yu Gothic UI Light" Text="Waiting.."/>
+            </Border>
+            <Grid Margin="5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="tblPercent" Margin="5,0,0,0" FontSize="24" Text="0%"/>
+                <Rectangle Grid.Column="1" Margin="8,3,8,3" Width="1" Fill="Gray"/>
+                <TextBlock x:Name="tblState" Grid.Column="2" VerticalAlignment="Center" FontSize="14" FontWeight="Light" TextTrimming="CharacterEllipsis" Text="대기 중.."/>
+            </Grid>
+            <Border Margin="5" BorderBrush="DarkGray" BorderThickness="1">
+                <ProgressBar x:Name="prgCurrent" Height="20"/>
+            </Border>
+        </StackPanel>
+    </Border>
+</Window>
