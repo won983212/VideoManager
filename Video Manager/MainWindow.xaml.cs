@@ -1,6 +1,9 @@
 ﻿using Microsoft.WindowsAPICodePack.Dialogs;
+using Microsoft.WindowsAPICodePack.Shell;
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -36,12 +39,13 @@ namespace Video_Manager
 
 		public HashSet<VideoEntry> SelectedVideos = new HashSet<VideoEntry>();
 		private List<string> selectedTags = new List<string>();
-		private List<string> allVideoFiles = new List<string>();
+		private List<VideoEntry> allVideos = null;
 
 		private ExpandAnimation statusBarAnimation;
 		private ExpandAnimation tagBarAnimation;
 		private FileDatabase filedb = new FileDatabase();
 		private DispatcherTimer resizeTimer = new DispatcherTimer();
+		private CollectionViewSource contentColView = null;
 
 		#endregion
 
@@ -81,6 +85,8 @@ namespace Video_Manager
 				tagbt.Click += Tag_Click;
 				pnlTags.Children.Add(tagbt);
 			}
+
+			RefreshVideos();
 		}
 
 		private void ShowMetadataPopup(VideoEntry vid)
@@ -94,29 +100,31 @@ namespace Video_Manager
 
 			itemsTags.ItemsSource = vid.Metadata.Tags;
 			pnlMetadata.Tag = vid;
+			blkVideoThumbnail.TimeLabel = vid.Length;
+			blkVideoThumbnail.ImageBitmap = vid.Thumbnail;
 		}
-
-		// Load Videos and Metadata. It will initialize all ui after loading.
-		// TODO WrapPanel is a bit slow. Do apply virtualization.
-		private async void LoadMetaAndVidsAsync()
+		
+		private async void LoadAllAsync()
 		{
 			itemsVideos.Effect = blur;
-			await Task.Factory.StartNew(LoadMetaVidsImpl);
+			await Task.Factory.StartNew(LoadAllImpl);
 			pnlLoading.Visibility = Visibility.Hidden;
 			itemsVideos.Effect = null;
 		}
 
-		private void LoadMetaVidsImpl()
+		private void LoadAllImpl()
 		{
 			filedb.Load();
 			Dispatcher.Invoke(() => itemsAllTags.ItemsSource = filedb.GetAllTags());
 
-			List<VideoEntry> entries = LoadVideos();
+			IEnumerable entries = LoadVideos();
 			Dispatcher.Invoke(() => itemsVideos.ItemsSource = entries);
 		}
 
 		private void RefreshVideos()
 		{
+			if (pnlLoading == null) return;
+
 			pnlLoading.Visibility = Visibility.Visible;
 			itemsVideos.Effect = blur;
 
@@ -128,7 +136,7 @@ namespace Video_Manager
 
 			Task.Factory.StartNew(() =>
 			{
-				List<VideoEntry> entries = LoadVideos();
+				IEnumerable entries = LoadVideos();
 				Dispatcher.Invoke(() =>
 				{
 					itemsVideos.ItemsSource = entries;
@@ -138,50 +146,79 @@ namespace Video_Manager
 			});
 		}
 
-		private List<VideoEntry> LoadVideos()
+		private void CreateAllVideoEntries()
 		{
 			int id = 0;
 			int processed = 0;
-			List<VideoEntry> thumbnails = new List<VideoEntry>();
 			string[] files = Directory.GetFiles(settings.WorkingFolder);
 
+			allVideos = new List<VideoEntry>();
 			foreach (string path in files)
 			{
 				string ext = System.IO.Path.GetExtension(path);
 				if (ext == ".avi" || ext == ".mp4" || ext == ".wmv" || ext == ".mkv" || ext == ".webm")
 				{
-					thumbnails.Add(new VideoEntry(id++, path, filedb.RetrieveMetadata(path)));
-					allVideoFiles.Add(System.IO.Path.GetFileName(path));
+					VideoEntry vid = new VideoEntry(id++, path, filedb.RetrieveMetadata(path));
+					Dispatcher.Invoke(() => vid.LoadThumbnail());
+					allVideos.Add(vid);
 				}
 				Dispatcher.Invoke(() => prgCurrent.Value = ++processed * 100.0 / files.Length);
 			}
-
-			VideoEntry.SortVideoEntries(thumbnails);
-			return thumbnails;
 		}
 
-		private void RefreshVideoSortAsync()
+		private IEnumerable LoadVideos()
 		{
-			if (pnlLoading == null)
-				return;
+			CollectionViewSource colView = new CollectionViewSource();
+			ObservableCollection<VideoEntry> thumbnails = new ObservableCollection<VideoEntry>();
 
-			pnlLoading.Visibility = Visibility.Visible;
-			itemsVideos.Effect = blur;
+			if (allVideos == null)
+				CreateAllVideoEntries();
 
-			Task.Factory.StartNew(() =>
+			int processed = 0;
+			foreach (VideoEntry ent in allVideos)
 			{
-				List<VideoEntry> thumbnails = new List<VideoEntry>((IEnumerable<VideoEntry>)itemsVideos.ItemsSource);
-				VideoEntry.SortVideoEntries(thumbnails);
-				Thread.Sleep(10);
-				Dispatcher.Invoke(() =>
+				if (selectedTags.Count == 0 || ent.HasTag(selectedTags))
+					thumbnails.Add(ent);
+				Dispatcher.Invoke(() => prgCurrent.Value = ++processed * 100.0 / allVideos.Count);
+			}
+
+			IEnumerable ret = null;
+			if (settings.ArrangeMode == 4)
+			{
+				Random r = new Random();
+				for(int i = thumbnails.Count - 1; i > 0; i--)
 				{
-					itemsVideos.ItemsSource = thumbnails;
-					pnlLoading.Visibility = Visibility.Hidden;
-					itemsVideos.Effect = null;
-				});
-			});
+					int k = r.Next(i + 1);
+					VideoEntry temp = thumbnails[i];
+					thumbnails[i] = thumbnails[k];
+					thumbnails[k] = temp;
+				}
+				ret = thumbnails;
+			}
+			else
+			{
+				colView.Source = thumbnails;
+				contentColView = colView;
+				switch (settings.ArrangeMode)
+				{
+					case 0:
+						contentColView.SortDescriptions.Add(new System.ComponentModel.SortDescription("LastModifiedTicks", System.ComponentModel.ListSortDirection.Descending));
+						break;
+					case 1:
+						contentColView.SortDescriptions.Add(new System.ComponentModel.SortDescription("LengthTicks", System.ComponentModel.ListSortDirection.Ascending));
+						break;
+					case 3:
+						contentColView.SortDescriptions.Add(new System.ComponentModel.SortDescription("CopyedCount", System.ComponentModel.ListSortDirection.Descending));
+						break;
+				}
+				contentColView.SortDescriptions.Add(new System.ComponentModel.SortDescription("Path", System.ComponentModel.ListSortDirection.Ascending));
+				ret = colView.View;
+			}
+
+			filedb.Save();
+			return ret;
 		}
-		
+
 		private string GetPrettySelectedSize()
 		{
 			int unitIndex = 0;
@@ -205,7 +242,7 @@ namespace Video_Manager
 
 		private void WindowLoaded(object sender, RoutedEventArgs e)
 		{
-			LoadMetaAndVidsAsync();
+			LoadAllAsync();
 			statusBarAnimation = new ExpandAnimation(pnlStatusBar);
 			tagBarAnimation = new ExpandAnimation(pnlTags, 30);
 		}
@@ -224,11 +261,11 @@ namespace Video_Manager
 				statusBarAnimation.Close();
 			else if (closed && SelectedVideos.Count > 0)
 				statusBarAnimation.Open();
-			
+
 			tblStatusText.Text = "현재 " + SelectedVideos.Count + "개 선택됨 (" + GetPrettySelectedSize() + ")";
 		}
 
-		private void Block_ShiftClick(object sender, EventArgs e)
+		private void Block_SelectClick(object sender, EventArgs e)
 		{
 			ThumbnailBlock block = sender as ThumbnailBlock;
 			ShowMetadataPopup((VideoEntry)block.Tag);
@@ -273,7 +310,7 @@ namespace Video_Manager
 				{
 					settings.WorkingFolder = dialog.FileName;
 					settings.Save();
-					RefreshVideos();
+					LoadAllAsync();
 				}
 				e.Handled = true;
 			}
@@ -281,8 +318,8 @@ namespace Video_Manager
 
 		private void ArrangeMode_SelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
-			RefreshVideoSortAsync();
 			settings.Save();
+			RefreshVideos();
 		}
 
 		private void MetadataPopup_Play_Click(object sender, RoutedEventArgs e)
@@ -326,12 +363,12 @@ namespace Video_Manager
 			if (e.Key == Key.F5)
 				RefreshVideos();
 		}
-		
+
 		private void DeleteSelected_Click(object sender, RoutedEventArgs e)
 		{
 			int selectedCount = SelectedVideos.Count;
 			MessageBoxResult res = MessageBox.Show("선택된 " + selectedCount + "개의 파일이 영구적으로 삭제됩니다. 계속하시겠습니까?", "삭제 경고", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-			if(res == MessageBoxResult.Yes)
+			if (res == MessageBoxResult.Yes)
 			{
 				FileEditWindow.ShowFileDeleteDialog(SelectedVideos);
 				RefreshVideos();
@@ -345,95 +382,9 @@ namespace Video_Manager
 			dialog.Title = "동영상을 복사할 폴더 선택";
 			dialog.IsFolderPicker = true;
 			if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
-				FileEditWindow.ShowFileCopyDialog(SelectedVideos, dialog.FileName);
+				FileEditWindow.ShowFileCopyDialog(filedb, SelectedVideos, dialog.FileName);
 		}
 
 		#endregion
-	}
-
-	public class VideoEntry
-	{
-		public int Id { get; }
-		public string Path { get; }
-		public long Size { get; }
-		public VideoMetadata Metadata { get; }
-
-		private static readonly SortByModifyDate _sortRuleModifyDate = new SortByModifyDate();
-		private static readonly SortByName _sortRuleName = new SortByName();
-		private static readonly SortByCopyCount _sortRuleCopyCount = new SortByCopyCount();
-
-		public VideoEntry(int id, string path, VideoMetadata meta)
-		{
-			Id = id;
-			Path = path;
-			Size = new FileInfo(path).Length;
-			Metadata = meta;
-		}
-
-		public override int GetHashCode()
-		{
-			return Id.GetHashCode();
-		}
-
-		public override bool Equals(object obj)
-		{
-			VideoEntry ent = obj as VideoEntry;
-			if (ent != null)
-				return ent.Id.Equals(Id);
-			return false;
-		}
-
-		public static void SortVideoEntries(List<VideoEntry> list)
-		{
-			int mode = Properties.Settings.Default.ArrangeMode; // modifydata, name, copyed, shuffle
-			switch (mode)
-			{
-				case 0:
-					list.Sort(_sortRuleModifyDate);
-					break;
-				case 1:
-					list.Sort(_sortRuleName);
-					break;
-				case 2:
-					list.Sort(_sortRuleCopyCount);
-					break;
-				default:
-					Random r = new Random();
-					for (int i = list.Count - 1; i > 0; i--)
-					{
-						int k = r.Next(i + 1);
-						VideoEntry temp = list[i];
-						list[i] = list[k];
-						list[k] = temp;
-					}
-					break;
-			}
-		}
-
-		private class SortByName : IComparer<VideoEntry>
-		{
-			public int Compare(VideoEntry x, VideoEntry y)
-			{
-				string file1 = System.IO.Path.GetFileName(x.Path);
-				string file2 = System.IO.Path.GetFileName(y.Path);
-				return file1.CompareTo(file2);
-			}
-		}
-
-		private class SortByModifyDate : IComparer<VideoEntry>
-		{
-			public int Compare(VideoEntry x, VideoEntry y)
-			{
-				return File.GetLastWriteTime(y.Path).CompareTo(File.GetLastWriteTime(x.Path));
-			}
-		}
-
-		private class SortByCopyCount : IComparer<VideoEntry>
-		{
-			public int Compare(VideoEntry x, VideoEntry y)
-			{
-				return x.Metadata.CopyedCount - y.Metadata.CopyedCount;
-			}
-		}
 	}
 }

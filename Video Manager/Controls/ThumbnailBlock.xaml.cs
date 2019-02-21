@@ -21,16 +21,29 @@ namespace Video_Manager.Controls
 	/// </summary>
 	public partial class ThumbnailBlock : UserControl, INotifyPropertyChanged
 	{
-		private string label = "00:00";
+		public static DependencyProperty ImageBitmapProperty
+			= DependencyProperty.Register("ImageBitmap", typeof(ImageSource), typeof(ThumbnailBlock));
+		public static DependencyProperty TimeLabelProperty
+			= DependencyProperty.Register("TimeLabel", typeof(string), typeof(ThumbnailBlock));
 
 		public ThumbnailBlock()
 		{
 			InitializeComponent();
 		}
-
+		
 		public bool IsCheckable { get; set; } = true;
 		public bool IsChecked { get; set; } = false;
-		public string TimeLabel { get => label; set { label = value; OnPropertyChanged("TimeLabel"); } }
+		public ImageSource ImageBitmap
+		{
+			get => (ImageSource)GetValue(ImageBitmapProperty);
+			set => SetValue(ImageBitmapProperty, value);
+		}
+		public string TimeLabel
+		{
+			get => (string)GetValue(TimeLabelProperty);
+			set => SetValue(TimeLabelProperty, value);
+		}
+
 		public event PropertyChangedEventHandler PropertyChanged;
 		public event EventHandler SelectClick;
 		public event EventHandler SelectionChanged;

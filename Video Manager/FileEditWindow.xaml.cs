@@ -22,15 +22,17 @@ namespace Video_Manager
 	public partial class FileEditWindow : Window
 	{
 		private List<VideoEntry> files;
+		private FileDatabase filedb;
 		private string destPath; // if null, files will be deleted.
 
-		private FileEditWindow(IEnumerable<VideoEntry> videoFiles) : this(videoFiles, null)
+		private FileEditWindow(IEnumerable<VideoEntry> videoFiles) : this(videoFiles, null, null)
 		{ }
 
-		private FileEditWindow(IEnumerable<VideoEntry> videoFiles, string copyPath)
+		private FileEditWindow(IEnumerable<VideoEntry> videoFiles, string copyPath, FileDatabase filedatabase)
 		{
 			InitializeComponent();
 			files = new List<VideoEntry>(videoFiles);
+			filedb = filedatabase;
 			destPath = copyPath;
 			ProcessFileAsync();
 		}
@@ -71,12 +73,16 @@ namespace Video_Manager
 			long processed = 0;
 
 			foreach (VideoEntry ent in files)
+			{
 				totalFileSize += new FileInfo(ent.Path).Length;
+				ent.Metadata.CopyedCount++;
+			}
+			filedb.Save();
 
 			foreach (VideoEntry ent in files)
 			{
 				string filename = System.IO.Path.GetFileName(ent.Path);
-				using (FileStream dest = new FileStream(System.IO.Path.Combine(destPath, filename), FileMode.CreateNew, FileAccess.Write))
+				using (FileStream dest = new FileStream(System.IO.Path.Combine(destPath, filename), FileMode.Create, FileAccess.Write))
 				{
 					using (FileStream src = new FileStream(ent.Path, FileMode.Open, FileAccess.Read))
 					{
@@ -115,9 +121,9 @@ namespace Video_Manager
 			new FileEditWindow(videoFiles).ShowDialog();
 		}
 
-		public static void ShowFileCopyDialog(IEnumerable<VideoEntry> videoFiles, string copyPath)
+		public static void ShowFileCopyDialog(FileDatabase filedb, IEnumerable<VideoEntry> videoFiles, string copyPath)
 		{
-			new FileEditWindow(videoFiles, copyPath).ShowDialog();
+			new FileEditWindow(videoFiles, copyPath, filedb).ShowDialog();
 		}
 	}
 }

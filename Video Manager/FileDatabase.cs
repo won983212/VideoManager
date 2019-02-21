@@ -1,16 +1,18 @@
-﻿using System;
+﻿using Microsoft.WindowsAPICodePack.Shell;
+using Microsoft.WindowsAPICodePack.Shell.PropertySystem;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Video_Manager
 {
-    public class FileDatabase
-    {
-		private const char BlockBeginner = (char)31;
+	public class FileDatabase
+	{
 		private Dictionary<string, int> allTagCounts = new Dictionary<string, int>();
 		private Dictionary<string, VideoMetadata> database = new Dictionary<string, VideoMetadata>();
 		private string dbPath = "";
@@ -22,6 +24,14 @@ namespace Video_Manager
 
 			VideoMetadata meta = new VideoMetadata(allTagCounts);
 			meta.CopyedCount = 0;
+
+			using (var shell = ShellObject.FromParsingName(filename))
+			{
+				IShellProperty property = shell.Properties.System.Media.Duration;
+				ulong dura = (ulong)property.ValueAsObject;
+				meta.Duration = TimeSpan.FromTicks((long)dura);
+			}
+
 			database.Add(filename, meta);
 			return meta;
 		}
@@ -39,51 +49,48 @@ namespace Video_Manager
 		public void Load()
 		{
 			if (!File.Exists(dbPath)) return;
-			using(StreamReader reader = new StreamReader(dbPath))
+			using (FileStream fileStream = new FileStream(dbPath, FileMode.Open))
 			{
-				string line = null;
-				string file = null;
-				VideoMetadata meta = null;
-
-				while((line = reader.ReadLine()) != null)
+				using (BinaryReader reader = new BinaryReader(fileStream))
 				{
-					if (line[0] == BlockBeginner)
+					int countOfDatas = reader.ReadInt32();
+					for(int i = 0; i < countOfDatas; i++)
 					{
-						if (file != null && meta != null)
-							database.Add(file, meta);
-						file = line.Substring(1);
-						meta = new VideoMetadata(allTagCounts);
-					}
-					else if(meta != null)
-					{
-						if(meta.CopyedCount == -1)
-							meta.CopyedCount = int.Parse(line);
-						else
-							meta.AddTag(line);
+						VideoMetadata meta = new VideoMetadata(allTagCounts);
+						string key = reader.ReadString();
+						meta.CopyedCount = reader.ReadInt32();
+						meta.Duration = TimeSpan.FromTicks(reader.ReadInt64());
+
+						int countOfTags = reader.ReadInt32();
+						for (int j = 0; j < countOfTags; j++)
+							meta.AddTag(reader.ReadString());
+						database.Add(key, meta);
 					}
 				}
-
-				if (file != null && meta != null)
-					database.Add(file, meta);
 			}
 		}
 
 		public void Save()
 		{
 			if (!Directory.Exists(Directory.GetParent(dbPath).FullName)) return;
-			using(StreamWriter writer = new StreamWriter(dbPath))
+			using (FileStream fileStream = new FileStream(dbPath, FileMode.Create))
 			{
-				foreach(var ent in database)
+				using (BinaryWriter writer = new BinaryWriter(fileStream))
 				{
-					writer.Write(BlockBeginner);
-					writer.WriteLine(ent.Key);
-					writer.WriteLine(ent.Value.CopyedCount);
-					foreach (string tag in ent.Value.Tags)
-						writer.WriteLine(tag);
+					writer.Write(database.Count);
+					foreach (var ent in database)
+					{
+						writer.Write(ent.Key);
+						writer.Write(ent.Value.CopyedCount);
+						writer.Write(ent.Value.Duration.Ticks);
+						writer.Write(ent.Value.Tags.Count());
+						foreach (string tag in ent.Value.Tags)
+							writer.Write(tag);
+					}
 				}
 			}
 		}
-    }
+	}
 
 	public class VideoMetadata
 	{
@@ -96,6 +103,7 @@ namespace Video_Manager
 		}
 
 		public int CopyedCount { get; set; } = -1;
+		public TimeSpan Duration { get; set; }
 		public IEnumerable<string> Tags
 		{
 			get

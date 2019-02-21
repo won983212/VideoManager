@@ -84,6 +84,7 @@
                             <TextBlock Grid.Column="1" Margin="5" VerticalAlignment="Center" FontSize="12" Text="정렬 기준:"/>
                             <ComboBox Grid.Column="2" Margin="3" Width="120" VerticalAlignment="Center" SelectedIndex="{Binding ArrangeMode, Source={x:Static p_setting:Settings.Default}}" SelectionChanged="ArrangeMode_SelectionChanged">
                                 <ComboBoxItem Content="수정된 날짜순"/>
+                                <ComboBoxItem Content="길이순"/>
                                 <ComboBoxItem Content="이름순"/>
                                 <ComboBoxItem Content="복사 횟수순"/>
                                 <ComboBoxItem Content="무작위로"/>
@@ -111,7 +112,8 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <controls:ThumbnailBlock Margin="7" Width="130" Height="70" SelectionChanged="Block_SelectionChanged" SelectClick="Block_ShiftClick" Tag="{Binding}"/>
+                                        <controls:ThumbnailBlock Margin="7" Width="{x:Static local:VideoEntry.FrameWidth}" Height="{x:Static local:VideoEntry.FrameHeight}" SelectionChanged="Block_SelectionChanged" SelectClick="Block_SelectClick" 
+                                                                 Tag="{Binding}" ImageBitmap="{Binding Thumbnail}" TimeLabel="{Binding Length}"/>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
@@ -139,7 +141,7 @@
             
             <!-- Video metadata viewer -->
             <Grid x:Name="pnlMetadata" Grid.ColumnSpan="2" Background="Transparent" Effect="{StaticResource ShadowEffect}" Visibility="Hidden">
-                <Border MinWidth="400" MaxWidth="600" HorizontalAlignment="Center" VerticalAlignment="Center" BorderBrush="DarkGray" BorderThickness="1" Background="White">
+                <Border MinWidth="400" MaxWidth="500" HorizontalAlignment="Center" VerticalAlignment="Center" BorderBrush="DarkGray" BorderThickness="1" Background="White">
                     <Grid Margin="7">
                         <Grid.Resources>
                             <Style x:Key="LightText" TargetType="TextBlock">

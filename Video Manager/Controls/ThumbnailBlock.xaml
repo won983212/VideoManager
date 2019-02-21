@@ -6,9 +6,33 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Video_Manager.Controls"
              mc:Ignorable="d" 
-             d:DesignHeight="70" d:DesignWidth="130">
+             d:DesignWidth="130" d:DesignHeight="70">
     <Grid Effect="{StaticResource ShadowEffect}">
-        <Image Stretch="Fill" Source="/Resources/thumbnail.png"/>
+        <Image x:Name="imgThumbnail" Stretch="Fill" Source="{Binding ElementName=ctlRoot, Path=ImageBitmap}"/>
+        <Rectangle Fill="#00FFFFFF">
+            <Rectangle.Style>
+                <Style TargetType="Rectangle">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsChecked, ElementName=ctlRoot}" Value="true">
+                            <DataTrigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation From="#00FFFFFF" To="#77FFFFFF" Duration="0:0:0.2" Storyboard.TargetProperty="Fill.Color"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </DataTrigger.EnterActions>
+                            <DataTrigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation From="#77FFFFFF" To="#00FFFFFF" Duration="0:0:0.2" Storyboard.TargetProperty="Fill.Color"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </DataTrigger.ExitActions>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Rectangle.Style>
+        </Rectangle>
         <Border Background="Transparent" BorderBrush="{StaticResource BlueBrush}" MouseDown="Background_MouseDown">
             <Border.Style>
                 <Style TargetType="Border">
@@ -18,14 +42,14 @@
                             <DataTrigger.EnterActions>
                                 <BeginStoryboard>
                                     <Storyboard>
-                                        <ThicknessAnimation From="0" To="3" Duration="0:0:0.1" Storyboard.TargetProperty="BorderThickness"/>
+                                        <ThicknessAnimation From="0" To="2" Duration="0:0:0.1" Storyboard.TargetProperty="BorderThickness"/>
                                     </Storyboard>
                                 </BeginStoryboard>
                             </DataTrigger.EnterActions>
                             <DataTrigger.ExitActions>
                                 <BeginStoryboard>
                                     <Storyboard>
-                                        <ThicknessAnimation From="3" To="0" Duration="0:0:0.1" Storyboard.TargetProperty="BorderThickness"/>
+                                        <ThicknessAnimation From="2" To="0" Duration="0:0:0.1" Storyboard.TargetProperty="BorderThickness"/>
                                     </Storyboard>
                                 </BeginStoryboard>
                             </DataTrigger.ExitActions>
