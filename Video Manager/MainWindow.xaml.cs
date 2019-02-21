@@ -146,11 +146,10 @@ namespace Video_Manager
 			});
 		}
 
-		private void CreateAllVideoEntries()
+		private void CreateAllVideoEntries(string[] files)
 		{
 			int id = 0;
 			int processed = 0;
-			string[] files = Directory.GetFiles(settings.WorkingFolder);
 
 			allVideos = new List<VideoEntry>();
 			foreach (string path in files)
@@ -170,9 +169,10 @@ namespace Video_Manager
 		{
 			CollectionViewSource colView = new CollectionViewSource();
 			ObservableCollection<VideoEntry> thumbnails = new ObservableCollection<VideoEntry>();
+			string[] files = Directory.GetFiles(settings.WorkingFolder);
 
-			if (allVideos == null)
-				CreateAllVideoEntries();
+			if (allVideos == null || allVideos.Count != files.Length)
+				CreateAllVideoEntries(files);
 
 			int processed = 0;
 			foreach (VideoEntry ent in allVideos)
