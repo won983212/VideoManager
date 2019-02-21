@@ -372,7 +372,7 @@ namespace Video_Manager
 			{
 				FileEditWindow.ShowFileDeleteDialog(SelectedVideos);
 				RefreshVideos();
-				MessageBox.Show(selectedCount + "개의 파일이 삭제되었습니다.");
+				MessageBox.Show(selectedCount + "개의 파일이 삭제되었습니다.", "삭제됨", MessageBoxButton.OK, MessageBoxImage.Information);
 			}
 		}
 
@@ -382,7 +382,10 @@ namespace Video_Manager
 			dialog.Title = "동영상을 복사할 폴더 선택";
 			dialog.IsFolderPicker = true;
 			if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
+			{
 				FileEditWindow.ShowFileCopyDialog(filedb, SelectedVideos, dialog.FileName);
+				MessageBox.Show(SelectedVideos.Count + "개의 파일이 복사되었습니다.", "복사됨", MessageBoxButton.OK, MessageBoxImage.Information);
+			}
 		}
 
 		#endregion
